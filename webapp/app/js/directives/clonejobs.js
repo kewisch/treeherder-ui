@@ -8,12 +8,12 @@
 treeherder.directive('thCloneJobs', [
     '$rootScope', '$http', 'ThLog', 'thUrl', 'thCloneHtml',
     'thServiceDomain', 'thResultStatusInfo', 'thEvents', 'thAggregateIds',
-    'thJobFilters', 'thResultStatusObject', 'ThResultSetModel',
+    'thJobFilters', 'thResultStatusObject', 'ThResultSetStore',
     'ThJobModel', 'linkifyBugsFilter', 'thResultStatus', 'thPlatformNameMap',
     function(
         $rootScope, $http, ThLog, thUrl, thCloneHtml,
         thServiceDomain, thResultStatusInfo, thEvents, thAggregateIds,
-        thJobFilters, thResultStatusObject, ThResultSetModel,
+        thJobFilters, thResultStatusObject, ThResultSetStore,
         ThJobModel, linkifyBugsFilter, thResultStatus, thPlatformNameMap){
 
     var $log = new ThLog("thCloneJobs");
@@ -78,8 +78,8 @@ treeherder.directive('thCloneJobs', [
     $rootScope.$on(
         thEvents.selectNextUnclassifiedFailure, function(ev){
 
-            var jobMap = ThResultSetModel.getJobMap($rootScope.repoName);
-            var lastJobSelected = ThResultSetModel.getSelectedJob($rootScope.repoName);
+            var jobMap = ThResultSetStore.getJobMap($rootScope.repoName);
+            var lastJobSelected = ThResultSetStore.getSelectedJob($rootScope.repoName);
 
             var targetEl, jobKey;
             if(!_.isEmpty(lastJobSelected.el)){
@@ -95,9 +95,9 @@ treeherder.directive('thCloneJobs', [
     $rootScope.$on(
         thEvents.selectPreviousUnclassifiedFailure, function(ev){
 
-            var jobMap = ThResultSetModel.getJobMap($rootScope.repoName);
+            var jobMap = ThResultSetStore.getJobMap($rootScope.repoName);
 
-            var lastJobSelected = ThResultSetModel.getSelectedJob($rootScope.repoName);
+            var lastJobSelected = ThResultSetStore.getSelectedJob($rootScope.repoName);
 
             var targetEl, jobKey;
             if(!_.isEmpty(lastJobSelected.el)){
@@ -127,7 +127,7 @@ treeherder.directive('thCloneJobs', [
         clickJobCb({}, jobEl, job);
         scrollToElement(jobEl);
 
-        ThResultSetModel.setSelectedJob(
+        ThResultSetStore.setSelectedJob(
             $rootScope.repoName, jobEl, job
             );
 
@@ -135,7 +135,7 @@ treeherder.directive('thCloneJobs', [
 
     var setSelectJobStyles = function(el){
 
-        var lastJobSelected = ThResultSetModel.getSelectedJob(
+        var lastJobSelected = ThResultSetStore.getSelectedJob(
             $rootScope.repoName);
 
         if(!_.isEmpty(lastJobSelected.el)){
@@ -151,7 +151,7 @@ treeherder.directive('thCloneJobs', [
     };
 
     var clearSelectJobStyles = function() {
-        var lastJobSelected = ThResultSetModel.getSelectedJob(
+        var lastJobSelected = ThResultSetStore.getSelectedJob(
             $rootScope.repoName);
 
         if (!_.isEmpty(lastJobSelected.el)) {
@@ -178,7 +178,7 @@ treeherder.directive('thCloneJobs', [
         clearSelectJobStyles();
 
         // Reset selected job to null to initialize nav position
-        ThResultSetModel.setSelectedJob($rootScope.repoName);
+        ThResultSetStore.setSelectedJob($rootScope.repoName);
 
         $rootScope.$emit(thEvents.jobClear, job);
     };
@@ -192,7 +192,7 @@ treeherder.directive('thCloneJobs', [
 
         var jobsShown = 0;
 
-        var lastJobSelected = ThResultSetModel.getSelectedJob(
+        var lastJobSelected = ThResultSetStore.getSelectedJob(
             $rootScope.repoName
             );
 
@@ -257,7 +257,7 @@ treeherder.directive('thCloneJobs', [
                 setSelectJobStyles(jobBtn);
 
                 //Update the selected job element to the current one
-                ThResultSetModel.setSelectedJob(
+                ThResultSetStore.setSelectedJob(
                     $rootScope.repoName, jobBtn, job);
             }
         }
@@ -307,7 +307,7 @@ treeherder.directive('thCloneJobs', [
                     _.bind(clickJobCb, this, ev, el, job)();
             }
 
-            ThResultSetModel.setSelectedJob($rootScope.repoName, el, job);
+            ThResultSetStore.setSelectedJob($rootScope.repoName, el, job);
 
         } else {
             // If user didn't select a job or anchor clear the selected job
@@ -378,7 +378,7 @@ treeherder.directive('thCloneJobs', [
 
         if(on){
 
-            ThResultSetModel.loadRevisions(
+            ThResultSetStore.loadRevisions(
                 $rootScope.repoName, this.resultset.id
             );
 
@@ -489,7 +489,7 @@ treeherder.directive('thCloneJobs', [
         //Empty the job column before populating it
         jobTdEl.empty();
 
-        var resultSetMap = ThResultSetModel.getResultSetsMap($rootScope.repoName);
+        var resultSetMap = ThResultSetStore.getResultSetsMap($rootScope.repoName);
 
         var jobCounts = thResultStatusObject.getResultStatusObject();
 
@@ -545,7 +545,7 @@ treeherder.directive('thCloneJobs', [
         }
 
         var job, jmKey, show;
-        var jobMap = ThResultSetModel.getJobMap($rootScope.repoName);
+        var jobMap = ThResultSetStore.getJobMap($rootScope.repoName);
 
         element.find('.job-list .job-btn').each(function internalFilterJob() {
             // using jquery to do these things was quite a bit slower,
@@ -654,7 +654,7 @@ treeherder.directive('thCloneJobs', [
      *
      */
     var resetCounts = function(resultSet){
-        var rsMap = ThResultSetModel.getResultSetsMap($rootScope.repoName)[resultSet.id];
+        var rsMap = ThResultSetStore.getResultSetsMap($rootScope.repoName)[resultSet.id];
         var jobCounts = thResultStatusObject.getResultStatusObject();
 
         var statusKeys = _.keys(jobCounts);
@@ -666,7 +666,7 @@ treeherder.directive('thCloneJobs', [
         var platformKey;
         for(var j=0; j < resultSet.platforms.length; j++){
 
-            platformKey = ThResultSetModel.getPlatformKey(
+            platformKey = ThResultSetStore.getPlatformKey(
                 resultSet.platforms[j].name,
                 resultSet.platforms[j].option
                 );
@@ -703,7 +703,7 @@ treeherder.directive('thCloneJobs', [
 
             platformName = getPlatformName(value.platformName);
 
-            platformKey = ThResultSetModel.getPlatformKey(
+            platformKey = ThResultSetStore.getPlatformKey(
                 value.platformName, value.platformOption
                 );
 
@@ -756,7 +756,7 @@ treeherder.directive('thCloneJobs', [
 
     var getNextUnclassifiedFailure = function(currentJob){
 
-        var resultsets = ThResultSetModel.getResultSetsArray($rootScope.repoName);
+        var resultsets = ThResultSetStore.getResultSetsArray($rootScope.repoName);
 
         var firstJob = null;
         var foundJob = false;
@@ -819,7 +819,7 @@ treeherder.directive('thCloneJobs', [
 
     var getPreviousUnclassifiedFailure = function(currentJob){
 
-        var resultsets = ThResultSetModel.getResultSetsArray($rootScope.repoName);
+        var resultsets = ThResultSetStore.getResultSetsArray($rootScope.repoName);
 
         var foundJob = false;
         var lastJob = null;
@@ -959,7 +959,7 @@ treeherder.directive('thCloneJobs', [
                     if (pinnedJobs.jobs.hasOwnProperty(jid)) {
                         //Only update the target resultset id
                         if(pinnedJobs.jobs[jid].result_set_id === scope.resultset.id){
-                            ThResultSetModel.aggregateJobPlatform(
+                            ThResultSetStore.aggregateJobPlatform(
                                 $rootScope.repoName, pinnedJobs.jobs[jid], platformData
                                 );
                         }
@@ -974,7 +974,7 @@ treeherder.directive('thCloneJobs', [
             thEvents.applyNewJobs, function(ev, resultSetId){
                 if(scope.resultset.id === resultSetId){
 
-                    var rsMap = ThResultSetModel.getResultSetsMap($rootScope.repoName);
+                    var rsMap = ThResultSetStore.getResultSetsMap($rootScope.repoName);
 
                     var resultsetAggregateId = thAggregateIds.getResultsetTableId(
                         $rootScope.repoName, scope.resultset.id, scope.resultset.revision
@@ -1047,7 +1047,7 @@ treeherder.directive('thCloneJobs', [
             // Render the row of job data
             jobTdEl = $( thCloneHtml.get('jobTdClone').text );
 
-            platformKey = ThResultSetModel.getPlatformKey(
+            platformKey = ThResultSetStore.getPlatformKey(
                 resultset.platforms[j].name, resultset.platforms[j].option
                 );
 
